@@ -45,6 +45,4 @@ A privacy-focused, browser-based interview assistant that uses client-side machi
    python main.py
    ```
 
-## License
 
-MIT License

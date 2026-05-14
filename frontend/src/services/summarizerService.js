@@ -1,6 +1,3 @@
-// Extractive summarizer using sentence embeddings.
-// Uses a worker to keep inference off the main thread.
-
 import { computeCentroid, cosineSimilarity } from '../utils/similarity';
 
 class SummarySvc {
@@ -11,16 +8,24 @@ class SummarySvc {
     this.ready = false;
     this.onProgress = null;
     this.onReady = null;
+    this.onError = null;
+    this.loadTime = null;
 
     // Cache embeddings to avoid redundant WASM calls
     this.cache = new Map();
   }
 
-  init(onProgress = null, onReady = null) {
-    if (this.worker) return;
-
+  init(onProgress = null, onReady = null, onError = null) {
     this.onProgress = onProgress;
     this.onReady = onReady;
+    this.onError = onError;
+
+    if (this.ready) {
+      this.onReady?.(this.loadTime);
+      return;
+    }
+
+    if (this.worker) return;
 
     this.worker = new Worker(
       new URL('../workers/embeddingWorker.js', import.meta.url),
@@ -33,7 +38,7 @@ class SummarySvc {
       switch (status) {
         case 'ready':
           this.ready = true;
-          console.log(`model ready: ${loadTime.toFixed(0)}ms`);
+          this.loadTime = loadTime;
           this.onReady?.(loadTime);
           break;
         case 'progress':
@@ -47,7 +52,8 @@ class SummarySvc {
           }
           break;
         case 'error':
-          console.error('worker error:', error);
+          console.error('SummarySvc: worker error:', error);
+          this.onError?.(error);
           if (id != null && this.callbacks.has(id)) {
             this.callbacks.get(id).reject(new Error(error));
             this.callbacks.delete(id);

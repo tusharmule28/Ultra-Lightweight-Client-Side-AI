@@ -16,12 +16,14 @@ export const useSummarizer = ({ transcripts = [] }) => {
   const [latency, setLatency] = useState(null);
   const [avgLat, setAvgLat] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
 
   const samples = useRef([]);
 
   // init model on mount
   useEffect(() => {
     setStatus('loading');
+    setError(null);
     summarySvc.init(
       (p) => {
         if (p?.progress !== undefined) setProgress(Math.round(p.progress));
@@ -29,6 +31,10 @@ export const useSummarizer = ({ transcripts = [] }) => {
       (time) => {
         setStatus('ready');
         setTLoad(time);
+      },
+      (err) => {
+        setStatus('error');
+        setError(err);
       }
     );
   }, []);
@@ -46,8 +52,9 @@ export const useSummarizer = ({ transcripts = [] }) => {
 
       const window = sentences.slice(-WINDOW);
 
+      // If we have very few sentences, just show the latest long one
       if (window.length < 2) {
-        setSummary(window[0]);
+        if (window[0].length > 10) setSummary(window[0]);
         return;
       }
 
@@ -64,6 +71,11 @@ export const useSummarizer = ({ transcripts = [] }) => {
           
           const avg = samples.current.reduce((a, b) => a + b, 0) / samples.current.length;
           setAvgLat(avg);
+        } else {
+          // Fallback: if summarize returns null (due to word count filter), 
+          // show the last sentence if it's substantial
+          const last = window[window.length - 1];
+          if (last.length > 20) setSummary(last);
         }
       } catch (err) {
         console.error('summarize hook failed:', err);
@@ -82,6 +94,7 @@ export const useSummarizer = ({ transcripts = [] }) => {
     summary,
     latency,
     avgLat,
-    busy
+    busy,
+    error
   };
 };

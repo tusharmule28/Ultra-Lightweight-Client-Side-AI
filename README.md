@@ -24,7 +24,7 @@ A privacy-focused, browser-based interview assistant that uses client-side machi
 - Node.js (v18+)
 - Python (v3.9+)
 
-### Installation
+### Installation of project
 
 1. Clone the repository:
    ```bash

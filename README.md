@@ -1,6 +1,6 @@
 # Ultra-Lightweight Client-Side AI
 
-A privacy-focused, browser-based interview assistant that uses client-side machine learning for real-time transcription, summarization, and feedback.
+A privacy focused, browser-based interview assistant that uses client-side machine learning for real-time transcription, summarization, and feedback.
 
 ## Features
 
